@@ -14,27 +14,30 @@
             @csrf
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Nom complet</label>
-                <input type="text" name="name" required style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: white; outline: none;">
+                <input type="text" name="name" value="{{ old('name') }}" required style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: white; outline: none;">
+                @error('name') <span style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span> @enderror
             </div>
 
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Email</label>
-                <input type="email" name="email" required style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: white; outline: none;">
+                <input type="email" name="email" value="{{ old('email') }}" required style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: white; outline: none;">
                 @error('email') <span style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span> @enderror
             </div>
 
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Rôle</label>
                 <select name="role" required style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: white; outline: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C/polyline%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px;">
-                    <option value="citizen">Citoyen</option>
-                    <option value="admin">Administrateur</option>
-                    <option value="technician">Technicien</option>
+                    <option value="citizen" {{ old('role') == 'citizen' ? 'selected' : '' }}>Citoyen</option>
+                    <option value="technician" {{ old('role') == 'technician' ? 'selected' : '' }}>Technicien</option>
                 </select>
+                @error('role') <span style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span> @enderror
             </div>
+
 
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-main);">Mot de passe</label>
                 <input type="password" name="password" required style="width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #e5e7eb; background: white; outline: none;">
+                @error('password') <span style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: block;">{{ $message }}</span> @enderror
             </div>
 
             <div style="margin-bottom: 32px;">

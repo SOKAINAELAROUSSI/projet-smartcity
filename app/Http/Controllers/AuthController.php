@@ -23,6 +23,9 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            if (Auth::user()->role === 'citizen') {
+                return redirect('/');
+            }
             return redirect()->intended('dashboard');
         }
 
@@ -42,7 +45,7 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'string', 'in:citizen,admin,technician'],
+            'role' => ['required', 'string', 'in:citizen,technician'],
         ]);
 
         $user = User::create([
@@ -54,6 +57,9 @@ class AuthController extends Controller
 
         Auth::login($user);
 
+        if ($user->role === 'citizen') {
+            return redirect('/');
+        }
         return redirect('/dashboard');
     }
 

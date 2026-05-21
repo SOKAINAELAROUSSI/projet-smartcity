@@ -16,7 +16,13 @@ class TechnicianProfile extends Model
         'is_available',
         'city',
         'phone',
-        'photo'
+        'photo',
+        'availability_status',
+        'notif_new_mission',
+        'notif_admin_messages',
+        'notif_urgent_missions',
+        'theme',
+        'language'
     ];
 
     public function user()

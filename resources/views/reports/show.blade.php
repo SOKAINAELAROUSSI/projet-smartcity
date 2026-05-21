@@ -1,20 +1,57 @@
-@extends('layouts.app')
+@extends(Auth::user()->role === 'admin' ? 'layouts.admin' : (Auth::user()->role === 'technician' ? 'layouts.technician' : 'layouts.app'))
 
 @section('title', $report->title)
 
 @section('content')
-<div style="padding: 60px; max-width: 1300px; margin: 0 auto;">
+<style>
+    .report-detail-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 40px;
+        align-items: flex-start;
+    }
+    .report-images-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .report-images-grid.two-cols {
+        grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 1024px) {
+        .report-detail-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+    }
+    @media (max-width: 768px) {
+        .report-header-section h1 {
+            font-size: 2.2rem !important;
+        }
+        .report-images-grid.two-cols {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+@php
+    $isAdminOrTech = Auth::user()->role === 'admin' || Auth::user()->role === 'technician';
+    $containerClass = $isAdminOrTech ? "" : "citizen-container";
+    $containerStyle = $isAdminOrTech 
+        ? "max-width: 1200px; margin: 0 auto; padding: 20px 0;" 
+        : "max-width: 1300px;";
+@endphp
+<div class="{{ $containerClass }}" style="{{ $containerStyle }}">
     <!-- Navigation Back -->
     <a href="{{ route('dashboard') }}" style="display: inline-flex; align-items: center; gap: 8px; color: var(--primary); text-decoration: none; font-weight: 700; margin-bottom: 32px; transition: var(--transition);">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
         Retour au tableau de bord
     </a>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 40px; align-items: flex-start;">
+    <div class="report-detail-grid">
         <!-- Left: Incident Info -->
         <div class="animate-slide-up">
             <div class="glass-card" style="padding: 48px; margin-bottom: 32px; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
+                <div class="report-header-section" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
                     <div>
                         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
                             <span class="badge {{ $report->status === 'terminee' ? 'badge-done' : ($report->status === 'en cours' ? 'badge-progress' : 'badge-pending') }}">
@@ -53,7 +90,7 @@
                 </div>
 
                 @if($report->image || $report->after_image)
-                    <div style="display: grid; grid-template-columns: {{ $report->after_image ? '1fr 1fr' : '1fr' }}; gap: 20px; margin-bottom: 40px;">
+                    <div class="report-images-grid {{ $report->after_image ? 'two-cols' : '' }}" style="margin-bottom: 40px;">
                         @if($report->image)
                             <div style="border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg);">
                                 <p style="padding: 10px; background: var(--slate-900); color: white; text-align: center; font-weight: 800; font-size: 0.7rem; text-transform: uppercase;">Avant</p>
@@ -135,23 +172,42 @@
 
             @if(Auth::user()->role === 'admin' && $report->status !== 'terminee')
                 <div class="glass-card animate-slide-up" style="padding: 32px; border: 2px solid var(--primary-100); animation-delay: 0.3s;">
-                    <h4 style="margin-bottom: 24px; color: var(--primary-800); font-size: 1.25rem;">Gestion d'Intervention</h4>
+                    <h4 style="margin-bottom: 24px; color: var(--primary-800); font-size: 1.25rem;">
+                    @php 
+                        $suggestedPriority = 'moyenne';
+                        $urgentKeywords = ['gaz', 'inondation', 'danger', 'feu', 'électrique', 'urgent', 'accidents'];
+                        foreach($urgentKeywords as $key) {
+                            if(stripos($report->title, $key) !== false || stripos($report->category->name ?? '', $key) !== false) {
+                                $suggestedPriority = 'haute';
+                                break;
+                            }
+                        }
+                    @endphp
+                    Gestion d'Intervention</h4>
                     <form action="{{ route('admin.assign', $report->id) }}" method="POST">
                         @csrf
                         <div style="margin-bottom: 20px;">
                             <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Affecter un Technicien</label>
                             <select name="technician_id" required style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--slate-200); outline: none; font-weight: 600;">
-                                @foreach(\App\Models\User::where('role', 'technician')->get() as $tech)
-                                    <option value="{{ $tech->id }}">{{ $tech->name }}</option>
+                                @foreach($recommendedTechnicians as $tech)
+                                    @php 
+                                        $isRecommended = stripos($tech->technicianProfile->speciality ?? '', $report->category->name ?? '') !== false;
+                                    @endphp
+                                    <option value="{{ $tech->id }}">
+                                        {{ $tech->name }} 
+                                        ({{ $tech->technicianProfile->speciality ?? 'Général' }}) 
+                                        - ⭐ {{ number_format($tech->technicianProfile->rating ?? 5, 1) }}
+                                        {{ $isRecommended ? '👍 RECOMMANDÉ' : '' }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                         <div style="margin-bottom: 32px;">
-                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Niveau de Priorité</label>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Niveau de Priorité (Suggéré: {{ $suggestedPriority }})</label>
                             <select name="priority" required style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--slate-200); outline: none; font-weight: 600;">
-                                <option value="faible">🟢 Basse</option>
-                                <option value="moyenne" selected>🟡 Moyenne</option>
-                                <option value="haute">🔴 Haute</option>
+                                <option value="faible" {{ $suggestedPriority === 'faible' ? 'selected' : '' }}>🟢 Basse</option>
+                                <option value="moyenne" {{ $suggestedPriority === 'moyenne' ? 'selected' : '' }}>🟡 Moyenne</option>
+                                <option value="haute" {{ $suggestedPriority === 'haute' ? 'selected' : '' }}>🔴 Haute</option>
                             </select>
                         </div>
                         <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 16px;">
@@ -170,13 +226,20 @@
                     @endphp
 
                     @if($intervention && $intervention->status === 'en attente')
-                        <form action="{{ route('technician.accept', $report->id) }}" method="POST">
-                            @csrf
-                            <p style="color: var(--text-muted); margin-bottom: 20px;">Vous avez été assigné à cette mission. Veuillez l'accepter pour commencer.</p>
-                            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 16px; background: var(--primary-600);">
-                                Accepter la Mission
-                            </button>
-                        </form>
+                        <div style="display: flex; gap: 12px;">
+                            <form action="{{ route('technician.accept', $report->id) }}" method="POST" style="flex: 1;">
+                                @csrf
+                                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 16px; background: var(--primary-600);">
+                                    Accepter la Mission
+                                </button>
+                            </form>
+                            <form action="{{ route('technician.reject', $report->id) }}" method="POST" style="flex: 1;">
+                                @csrf
+                                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 16px; background: #ef4444;">
+                                    Refuser
+                                </button>
+                            </form>
+                        </div>
                     @else
                         <form action="{{ route('technician.update', $report->id) }}" method="POST" enctype="multipart/form-data">
                             @csrf

@@ -11,6 +11,23 @@ use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+        if ($user->role === 'admin') {
+            $query = Report::with(['category', 'user'])->latest();
+            
+            if ($request->has('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+            
+            $reports = $query->paginate(15);
+            return view('reports.admin_index', compact('reports'));
+        }
+        
+        return redirect()->route('dashboard');
+    }
+
     public function create()
     {
         $categories = Category::all();
@@ -49,7 +66,13 @@ class ReportController extends Controller
     public function show(Report $report)
     {
         $report->load(['user', 'interventions.technician', 'comments.user', 'rating', 'category']);
-        return view('reports.show', compact('report'));
+        
+        $recommendedTechnicians = [];
+        if (Auth::check() && Auth::user()->role === 'admin') {
+            $recommendedTechnicians = User::where('role', 'technician')->with('technicianProfile')->get();
+        }
+        
+        return view('reports.show', compact('report', 'recommendedTechnicians'));
     }
 
     public function rate(Request $request, Report $report)
@@ -73,5 +96,11 @@ class ReportController extends Controller
         }
 
         return back()->with('success', 'Merci pour votre évaluation !');
+    }
+
+    public function myReports()
+    {
+        $reports = Auth::user()->reports()->latest()->paginate(10);
+        return view('reports.index', compact('reports'));
     }
 }

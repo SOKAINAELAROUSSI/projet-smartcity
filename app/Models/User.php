@@ -44,5 +44,20 @@ class User extends Authenticatable
     {
         return $this->hasOne(TechnicianProfile::class);
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notify($title, $message, $type = 'info', $link = null)
+    {
+        return $this->notifications()->create([
+            'title' => $title,
+            'message' => $message,
+            'type' => $type,
+            'link' => $link
+        ]);
+    }
 }
 

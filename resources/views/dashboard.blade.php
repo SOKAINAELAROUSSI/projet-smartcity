@@ -28,13 +28,60 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                     Capteurs IoT
                 </a>
+                @if(Auth::user()->role === 'technician')
+                    <a href="{{ route('technician.profile') }}" class="sidebar-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        Mon Profil
+                    </a>
+                @endif
                 @if(Auth::user()->role === 'admin')
                     <a href="{{ route('categories.index') }}" class="sidebar-item">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
                         Gérer les Services
                     </a>
+                    <a href="{{ route('admin.users.index') }}" class="sidebar-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        Utilisateurs
+                    </a>
+                    <a href="{{ route('admin.map') }}" class="sidebar-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                        Carte Urbaine
+                    </a>
                 @endif
             </nav>
+
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--slate-100);">
+
+            <a href="/" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; text-decoration: none; color: #3b82f6; font-weight: 700; font-size: 0.9rem; border: 1px solid var(--slate-200); transition: all 0.2s; justify-content: center;"
+               onmouseover="this.style.background='#eff6ff'; this.style.borderColor='#3b82f6'"
+               onmouseout="this.style.background='transparent'; this.style.borderColor='var(--slate-200)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"></path></svg>
+                Retour au site
+            </a>
+
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--slate-100);">
+
+            <!-- Notifications Section -->
+            <div style="margin-top: 20px;">
+                <h5 style="font-size: 0.75rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    Notifications
+                    @php $unreadCount = Auth::user()->notifications()->where('is_read', false)->count(); @endphp
+                    @if($unreadCount > 0)
+                        <span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.65rem;">{{ $unreadCount }}</span>
+                    @endif
+                </h5>
+                <div style="display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                    @forelse(Auth::user()->notifications()->latest()->take(5)->get() as $notif)
+                        <a href="{{ $notif->link ?? '#' }}" style="text-decoration: none; padding: 12px; border-radius: 12px; background: {{ $notif->is_read ? 'transparent' : 'var(--primary-50)' }}; border: 1px solid {{ $notif->is_read ? 'var(--slate-100)' : 'var(--primary-200)' }}; transition: var(--transition);">
+                            <p style="font-size: 0.8rem; font-weight: 800; color: var(--slate-900); margin-bottom: 4px;">{{ $notif->title }}</p>
+                            <p style="font-size: 0.75rem; color: var(--slate-600); line-height: 1.4;">{{ Str::limit($notif->message, 50) }}</p>
+                            <p style="font-size: 0.65rem; color: var(--slate-400); margin-top: 6px;">{{ $notif->created_at->diffForHumans() }}</p>
+                        </a>
+                    @empty
+                        <p style="font-size: 0.8rem; color: var(--slate-400); text-align: center; padding: 20px;">Aucune notification</p>
+                    @endforelse
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -69,7 +116,17 @@
                 <div style="font-size: 2rem; font-weight: 900; color: var(--slate-900);">{{ $smartData['active_sensors'] }}</div>
                 <p style="font-size: 0.8rem; color: var(--slate-800); font-weight: 700; margin-top: 8px;">IoT en ligne</p>
             </div>
+            
+            @if(Auth::user()->role === 'admin')
+                <a href="{{ route('categories.index') }}" class="glass-card" style="padding: 24px; text-decoration: none; border: 2px dashed var(--primary-300); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: var(--primary-50);">
+                    <div style="width: 48px; height: 48px; background: var(--primary-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-600)" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                    </div>
+                    <p style="font-weight: 800; color: var(--primary-800); font-size: 0.85rem;">Gérer les Services Urbains</p>
+                </a>
+            @endif
         </div>
+
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin-bottom: 40px;">
             <!-- Charts Section -->

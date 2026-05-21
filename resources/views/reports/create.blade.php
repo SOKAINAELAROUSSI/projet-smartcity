@@ -3,18 +3,51 @@
 @section('title', 'Signaler un Problème')
 
 @section('content')
-<div style="padding: 60px; max-width: 1200px; margin: 0 auto;">
-    <div style="margin-bottom: 50px; text-align: center;">
-        <h1 style="font-size: 3.5rem; color: var(--slate-900); letter-spacing: -2px;">Signaler un Incident</h1>
-        <p style="color: var(--slate-500); font-size: 1.2rem;">Aidez-nous à améliorer la ville en signalant les problèmes urbains.</p>
+<style>
+    .report-form-grid {
+        padding: 48px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+    .category-selection-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+    @media (max-width: 1024px) {
+        .report-form-grid {
+            grid-template-columns: 1fr;
+            padding: 24px;
+            gap: 24px;
+        }
+    }
+    @media (max-width: 768px) {
+        .report-create-title h1 {
+            font-size: 2.2rem !important;
+        }
+        .report-create-title p {
+            font-size: 1rem !important;
+        }
+    }
+    @media (max-width: 640px) {
+        .category-selection-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+<div class="citizen-container">
+    <div class="report-create-title" style="margin-bottom: 50px; text-align: center;">
+        <h1 style="font-size: 3.5rem; color: var(--slate-900); letter-spacing: -2px; margin: 0 0 8px;">Signaler un Incident</h1>
+        <p style="color: var(--slate-500); font-size: 1.2rem; margin: 0;">Aidez-nous à améliorer la ville en signalant les problèmes urbains.</p>
     </div>
 
-    <form action="{{ route('reports.store') }}" method="POST" enctype="multipart/form-data" class="glass-card" style="padding: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+    <form action="{{ route('reports.store') }}" method="POST" enctype="multipart/form-data" class="glass-card report-form-grid">
         @csrf
         <div>
             <div style="margin-bottom: 24px;">
                 <label style="display: block; font-weight: 700; color: var(--slate-700); margin-bottom: 10px;">Catégorie d'Incident</label>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                <div class="category-selection-grid">
                     @foreach($categories as $category)
                         <label style="cursor: pointer;">
                             <input type="radio" name="category_id" value="{{ $category->id }}" required style="display: none;" onchange="this.parentElement.parentElement.querySelectorAll('div').forEach(d => d.style.background='white'); this.nextElementSibling.style.background='var(--primary-100)';">
